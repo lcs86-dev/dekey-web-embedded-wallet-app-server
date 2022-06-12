@@ -1,8 +1,5 @@
 const path = require("path");
 
-// require("dotenv").config({ path: path.resolve(__dirname, "../conf/.env") });
-require("dotenv").config();
-
 const {
   POSTGRESQL_PASSWORD,
   POSTGRESQL_USERNAME,

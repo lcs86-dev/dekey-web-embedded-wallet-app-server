@@ -4,46 +4,15 @@ const crypto = require("crypto");
 const { body, validationResult } = require("express-validator");
 
 const db = require("../db/postgres");
-const {
-  createJwt,
-  verifyJwt,
-  JWT,
-  JWE,
-  keyStore,
-  createMpcJwt,
-  verifyJwtForUnlock,
-} = require("../utils/jwt");
-// const { createBaseRules } = require("./rule");
-// const { createEthAccount } = require("../utils/coin");
-const bcrypt = require("bcrypt");
-const {
-  lockAccount,
-  unlockAccount,
-  verifySelfSign,
-  resetUserLimits,
-  emitUserEvent,
-} = require("../service/user");
-// const { sendEmail } = require("../service/email");
-// const { resetMfa, handleResetFailure } = require("../service/rule/rule");
-const saltRound = 10;
-// const encryptKey = keyStore.get({ kid: "encrypt" });
+const { createJwt, verifyJwt } = require("../utils/jwt");
+const { verifySelfSign } = require("../service/user");
 const { logger, customLog, customErrorLog } = require("../utils/logger");
-const { validationErrorHandler } = require("../utils/error");
 const { createUser, createWallet, createUserProxy } = require("../utils/user");
 const { bodyValidationMiddleware } = require("../utils/middleware");
 
 const filterUserSecrets = (user) => {
-  delete user.lockedSessionJwts;
-  // delete user.twoFactorSecret;
-  // delete user.lastPath;
-  // delete user.cipher;
-  // delete user.twoFAResetCode;
-  // delete user.created;
-  // delete user.updated;
-  // delete user.passResetCode;
   return {
     ...user,
-    // share: user.share,
   };
 };
 
@@ -178,38 +147,6 @@ userRouter.post(
 );
 
 userRouter.post(
-  "/uid-wid",
-  customLog,
-  body("sid").notEmpty().isString(),
-  async (req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      const { sid } = req.body;
-      const { uid, wid } = await db("user_proxies").where({ sid }).first();
-
-      const user = await db("users").where({ uid }).first();
-
-      if (!user || user.share.sid !== sid) {
-        throw new Error(
-          `No user or sid mismatch with sid ${sid} and user ${JSON.stringify(
-            user
-          )}`
-        );
-      }
-
-      res.send({ uid, wid });
-    } catch (err) {
-      customErrorLog(err, req);
-      next(err);
-    }
-  }
-);
-
-userRouter.post(
   "/accessToken/regen",
   verifyJwt,
   customLog,
@@ -220,27 +157,10 @@ userRouter.post(
       const expiresIn = process.env.SESSION_JWT_DURATION_IN_MILLISECONDS;
       res.send({ accessToken, expiresIn });
     } catch (err) {
-      customErrorLog(err, req);
       next(err);
     }
   }
 );
-
-userRouter.post("/lock", verifyJwt, customLog, async (req, res, next) => {
-  const uid = req.user.uid;
-
-  try {
-    const authHeader = req.headers["authorization"];
-    const accessToken = authHeader && authHeader.split(" ")[1];
-
-    await lockAccount({ uid, accessToken });
-
-    res.send({});
-  } catch (err) {
-    customErrorLog(err, req);
-    next(err);
-  }
-});
 
 userRouter.post(
   "/unlock",
@@ -251,6 +171,7 @@ userRouter.post(
   body("aaid").notEmpty().isNumeric(),
   body("sid").notEmpty().isString(),
   body("wid").notEmpty().isNumeric(),
+  bodyValidationMiddleware,
   async (req, res, next) => {
     try {
       const errors = validationResult(req);
@@ -269,38 +190,6 @@ userRouter.post(
 
       res.status(200).send({ accessToken, expiresIn });
     } catch (err) {
-      customErrorLog(err, req);
-      next(err);
-    }
-  }
-);
-
-userRouter.post(
-  "/self-sign/verify",
-  verifyJwt,
-  customLog,
-  body("r").notEmpty().isString(),
-  body("s").notEmpty().isString(),
-  body("hashMessage").notEmpty().isString(),
-  body("aaid").notEmpty().isNumeric(),
-  async (req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      const { r, s, hashMessage, aaid } = req.body;
-      const uid = req.user.uid;
-
-      await verifySelfSign({ r, s, hashMessage, aaid, uid });
-
-      const accessToken = createJwt(uid);
-      const expiresIn = process.env.SESSION_JWT_DURATION_IN_MILLISECONDS;
-
-      res.send({ accessToken, expiresIn });
-    } catch (err) {
-      customErrorLog(err, req);
       next(err);
     }
   }
@@ -316,54 +205,17 @@ userRouter.post("/get", verifyJwt, customLog, async (req, res, next) => {
 
     res.send({ user: filterUserSecrets(user), accessToken, expiresIn });
   } catch (err) {
-    customErrorLog(err, req);
     next(err);
   }
 });
 
 userRouter.post(
-  "/get-with-sid",
-  customLog,
-  body("sid").notEmpty().isString(),
-  async (req, res) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      const { sid } = req.body;
-      const { uid } = await db("user_proxies").where({ sid }).first();
-
-      const user = await db("users").where({ uid }).first();
-
-      if (!user) {
-        throw new Error(`user not found with uid ${uid}`);
-      }
-
-      const accessToken = createJwt(uid);
-      const expiresIn = process.env.SESSION_JWT_DURATION_IN_MILLISECONDS;
-
-      res.send({ user: filterUserSecrets(user), accessToken, expiresIn });
-    } catch (err) {
-      customErrorLog(err, req);
-      res.status(500).send({ error: err.toString() });
-    }
-  }
-);
-
-userRouter.post(
   "/challenge-message",
   customLog,
-  // body("sid").notEmpty().toString(), // TODO: why this line make errors?
+  body("sid").notEmpty().isString(),
+  bodyValidationMiddleware,
   async (req, res, next) => {
     try {
-      console.log("req.body", req.body);
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
       const { sid } = req.body;
 
       const { uid } = await db("user_proxies")
@@ -383,8 +235,6 @@ userRouter.post(
 
       res.send({ hashMessage });
     } catch (err) {
-      customErrorLog(err, req);
-      logger.error(err);
       next(err);
     }
   }

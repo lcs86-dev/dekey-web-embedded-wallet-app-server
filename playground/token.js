@@ -4,30 +4,24 @@ const { readFileSync, writeFileSync } = require("fs");
 const requestIp = require("request-ip");
 const keyStorage = "./storage/key_store.json";
 
-// require("dotenv").config();
-// const SESSION_JWT_DURATION = process.env.SESSION_JWT_DURATION;
-// const MPC_JWT_DURATION = process.env.MPC_JWT_DURATION;
-
-const jsonKeystore = JSON.stringify(
-	{
-		"keys":[
-			 {
-					"crv":"Ed25519",
-					"x":"-VnRo9og0ELlKk1RYcwNsWAY9PRjk_znM4XUJpG_oj0",
-					"d":"m_FirTvGobtSU2tYJ48_ZFoPac11K3gLgHaXrJWyEsQ",
-					"kty":"OKP",
-					"kid":"session"
-			 },
-			 {
-					"crv":"Ed25519",
-					"x":"PRPEic-E9zI0I2O671ftRxq31m6Ww7FBCCkBIUevNIU",
-					"d":"75jPB_GikkBmIO7PZ7pNs8j65krsk9hHXXYno2R-tRE",
-					"kty":"OKP",
-					"kid":"mpc"
-			 }
-		]
- }
-)
+const jsonKeystore = JSON.stringify({
+  keys: [
+    {
+      crv: "Ed25519",
+      x: "-VnRo9og0ELlKk1RYcwNsWAY9PRjk_znM4XUJpG_oj0",
+      d: "m_FirTvGobtSU2tYJ48_ZFoPac11K3gLgHaXrJWyEsQ",
+      kty: "OKP",
+      kid: "session",
+    },
+    {
+      crv: "Ed25519",
+      x: "PRPEic-E9zI0I2O671ftRxq31m6Ww7FBCCkBIUevNIU",
+      d: "75jPB_GikkBmIO7PZ7pNs8j65krsk9hHXXYno2R-tRE",
+      kty: "OKP",
+      kid: "mpc",
+    },
+  ],
+});
 
 let keyStore;
 try {
@@ -41,7 +35,7 @@ try {
     // keyStore.generateSync("RSA", 2048, { kid: "encrypt" });
     writeFileSync(keyStorage, JSON.stringify(keyStore.toJWKS(true)));
   } else {
-    console.log(err)
+    console.log(err);
   }
 }
 
@@ -61,27 +55,26 @@ const createMpcJwt = (claim) => {
   **/
   const mpcKey = keyStore.get({ kid: "mpc" });
   //claim  = JSON.stringify(claim)
-  return JWT.sign(claim, mpcKey, { expiresIn: '1 sec' }); 
+  return JWT.sign(claim, mpcKey, { expiresIn: "1 sec" });
 };
 
 const createJwt = (uid) => {
-	console.log('createJwt')
+  console.log("createJwt");
   const signKey = keyStore.get({ kid: "session" });
-	console.log(signKey)
-  return JWT.sign({ uid }, signKey, { expiresIn: '10 min' });
+  console.log(signKey);
+  return JWT.sign({ uid }, signKey, { expiresIn: "10 min" });
 };
 
 const claim = {
-	uid: 1,
-	op: "gen",
-	data: { dsa: "ecdsa", curve: "secp256k1" },
+  uid: 1,
+  op: "gen",
+  data: { dsa: "ecdsa", curve: "secp256k1" },
 };
 
-console.log(createMpcJwt(claim))
+console.log(createMpcJwt(claim));
 setTimeout(() => {
-	console.log(createMpcJwt(claim))
-}, 1000)
-
+  console.log(createMpcJwt(claim));
+}, 1000);
 
 // console.log(createMpcJwt(claim));
 // setTimeout(() => {

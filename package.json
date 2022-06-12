@@ -1,7 +1,7 @@
 {
   "name": "dkeys-dapp-server",
   "version": "0.0.1",
-  "description": "",
+  "description": "Dekey web embedded wallet cs app server",
   "main": "index.js",
   "scripts": {
     "start": "node ./src/index.js",

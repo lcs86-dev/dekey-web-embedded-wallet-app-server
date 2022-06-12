@@ -1,13 +1,10 @@
 "use strict";
-const { JWK, JWT, JWKS, JWE } = require("jose");
+const { JWT, JWKS, JWE } = require("jose");
 const { readFileSync, writeFileSync } = require("fs");
-const requestIp = require("request-ip");
 const keyStorage = "./storage/key_store.json";
 const { logger, customLog } = require("./logger");
-const { LogDescription } = require("ethers/lib/utils");
 const db = require("../db/postgres");
 
-require("dotenv").config();
 const SESSION_JWT_DURATION = process.env.SESSION_JWT_DURATION;
 const MPC_JWT_DURATION = process.env.MPC_JWT_DURATION;
 
@@ -25,7 +22,6 @@ try {
     // keyStore.generateSync("RSA", 2048, { kid: "encrypt" });
     writeFileSync(keyStorage, JSON.stringify(keyStore.toJWKS(true)));
   } else {
-    // console.log(err)
     logger.error(err.toString());
   }
 }
@@ -131,28 +127,6 @@ const verifyJwtForBackup = async (req, res, next) => {
   }
 };
 
-const verifyJwtForUnlock = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  if (token == null)
-    return res.status(401).send({ error: "No accessToken found" });
-  let sessionKey = keyStore.get({ kid: "session" });
-
-  try {
-    const claim = JWT.verify(token, sessionKey);
-    req.user = claim;
-
-    next();
-  } catch (err) {
-    if (err.code == "ERR_JWT_EXPIRED") {
-      return res.status(401).send({ error: "Access token expired" });
-      //need to redirect
-    } else {
-      return res.status(401).send({ error: "Authoriziation failed" });
-    }
-  }
-};
-
 const createMpcJwt = (claim) => {
   /**
    * 
@@ -204,7 +178,6 @@ module.exports = {
   keyStore,
   createJwt,
   verifyJwt,
-  verifyJwtForUnlock,
   verifyJwtForBackup,
   createMpcJwt,
   verifyMpcJwt,

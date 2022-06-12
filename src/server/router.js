@@ -8,10 +8,8 @@ const helmet = require("helmet");
 const hpp = require("hpp");
 
 const controller = require("../controller");
-const { logger } = require("../utils/logger");
 const error_handler = require("./error_handler");
 
-// db.connect().then(() => {
 app.use(cors());
 
 app.use(express.static(path.join(__dirname, "/..", "/public")));
@@ -26,11 +24,6 @@ app.get("/", (req, res) => {
   res.end();
 });
 
-// app.get('/ws', (req, res) => {
-//   const mpcServer = selectMpcServer(req)
-//   mpcProxies[mpcServer].web(req, res)
-// });
-
 app.get("/api/health-check", (req, res) => {
   return res.status(200).json();
 });
@@ -39,6 +32,5 @@ app.use("/api/v1/user", controller.userRouter);
 app.use("/api/v1/address", controller.addressRouter);
 
 app.use(error_handler);
-// });
 
 module.exports = app;
