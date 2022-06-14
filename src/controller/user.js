@@ -27,7 +27,7 @@ userRouter.post(
   body("pubkey").notEmpty().isString().isLength({ min: 1, max: 100 }),
   body("uCPubKey").notEmpty().isString().isLength({ min: 1, max: 100 }),
   body("sid").notEmpty().isString().isLength({ min: 1, max: 100 }),
-  body("uid").notEmpty().isNumeric().isLength({ min: 1, max: 100 }),
+  body("uid").notEmpty().isString().isLength({ min: 1, max: 100 }),
   body("wid").notEmpty().isNumeric().isLength({ min: 1, max: 100 }),
   bodyValidationMiddleware,
   async (req, res, next) => {
@@ -78,7 +78,7 @@ userRouter.post(
   "/recover",
   customLog,
   body("uCPubKey").notEmpty().isString().isLength({ min: 1, max: 100 }),
-  body("uid").notEmpty().isNumeric().isLength({ min: 1, max: 100 }),
+  body("uid").notEmpty().isString().isLength({ min: 1, max: 100 }),
   body("wid").notEmpty().isNumeric().isLength({ min: 1, max: 100 }),
   bodyValidationMiddleware,
   async (req, res, next) => {
@@ -114,7 +114,7 @@ userRouter.post(
   "/wallets",
   customLog,
   body("uCPubKey").notEmpty().isString().isLength({ min: 1, max: 100 }),
-  body("uid").notEmpty().isNumeric().isLength({ min: 1, max: 100 }),
+  body("uid").notEmpty().isString().isLength({ min: 1, max: 100 }),
   body("wid").notEmpty().isNumeric().isLength({ min: 1, max: 100 }),
   bodyValidationMiddleware,
   async (req, res, next) => {

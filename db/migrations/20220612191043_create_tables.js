@@ -1,7 +1,7 @@
 exports.up = function (knex, Promise) {
   return knex.schema
     .createTable("users", function (table) {
-      table.bigint("uid").notNullable();
+      table.string("uid").notNullable();
       table.integer("wid").notNullable();
       table.json("accounts").notNullable();
       table.timestamps();
@@ -9,13 +9,13 @@ exports.up = function (knex, Promise) {
       table.unique("uid");
     })
     .createTable("wallets", function (table) {
-      table.bigint("uid").notNullable();
+      table.string("uid").notNullable();
       table.integer("wid").notNullable();
       table.string("ucPubKey").notNullable();
       table.timestamps();
     })
     .createTable("user_proxies", function (table) {
-      table.bigint("uid").notNullable();
+      table.string("uid").notNullable();
       table.string("sid").notNullable();
       table.timestamps();
 

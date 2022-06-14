@@ -1,10 +1,10 @@
 const path = require("path");
 
-if (process.env.NODE_ENV === "development") {
-  require("dotenv").config();
-} else {
-  require("dotenv").config({ path: path.resolve(__dirname, "../conf/.env") });
-}
+// if (process.env.NODE_ENV === "development") {
+require("dotenv").config();
+// } else {
+//   require("dotenv").config({ path: path.resolve(__dirname, "../conf/.env") });
+// }
 
 require("./db/postgres");
 

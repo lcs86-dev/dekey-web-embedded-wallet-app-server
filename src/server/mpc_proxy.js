@@ -5,7 +5,7 @@ const { logger } = require("../utils/logger");
 
 var mpcProxies = {
   mpc_server_1: new httpProxy.createProxyServer({
-    target: `ws://localhost:8080/gen`,
+    target: `ws://${process.env.MPC_CS_ADDRESS}/gen`,
   }).on("error", (err) => {
     logger.error(err.toString());
   }),
